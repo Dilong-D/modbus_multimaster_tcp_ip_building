@@ -17,24 +17,35 @@ t_cob_address = 420
 f_cob_address = 422
 ub_address = 424
 tr_address = 426
-CONTROLLER_IP = '192.168.1.115'
-LOGGER_IP = '192.168.1.115'
-OWN_IP = '192.168.1.116'
+CONTROLLER_IP = '192.168.1.111'
+LOGGER_IP = '192.168.1.222'
+OWN_IP = '192.168.1.202'
 PORT = 5555
 DT = 1
 
 
 # example function registered after as a time callback
 def step():
-	# building.building_simulation_step(server.get_time(), DT, float(server.get_t_zco_from_registers())/100,
-	#  								  float(server.get_t_o_from_registers())/100)
-	building.building_simulation_step(server.get_time(), DT, 40000.0 / 100, 27300.0 / 100)
+	# print(server.get_t_zco_from_registers())
+	# print(server.get_t_o_from_registers())
+	# print(server.get_t_zco_from_registers()[0])
+	# print(server.get_t_o_from_registers()[0])
+	building.building_simulation_step(server.get_time(), DT, float(server.get_t_zco_from_registers()[0]) / 100,
+									  float(server.get_t_o_from_registers()[0]) / 100)
+	# building.building_simulation_step(server.get_time(), DT, 40000.0 / 100, 27300.0 / 100)
 	print("Sending updates")
-	# logger.send_update(building)
-	water_flow_controller.send_update(building)
+	try:
+		logger.send_update(building)
+	except:
+		print("Error with sending data to Logger")
+	try:
+		water_flow_controller.send_update(building)
+	except:
+		print("Error with sending data to Water Flow Controller")
 	print(building)
+	print(server.get_ready_flag())
 	server.set_ready_flag()
-
+	print(server.get_ready_flag())
 
 class Receiver(ModbusTcpClient):
 	def __init__(self, host, port, name):
@@ -66,10 +77,16 @@ class Logger(Receiver):
 		super(Logger, self).__init__(LOGGER_IP, PORT, 'Logger')
 
 	def send_update(self, building_arg):
-		super(Logger, self).write_register(t_cob_address, int(building_arg.t_cob * 100))
-		super(Logger, self).write_register(f_cob_address, int(building_arg.f_cob * 1000000))
-		super(Logger, self).write_register(ub_address, int(building_arg.ub * 100))
-		super(Logger, self).write_register(tr_address, int(building_arg.t_ro * 100))
+		super(Logger, self).write_registers(t_cob_address,
+											[int(building_arg.t_cob * 100), 69, int(building_arg.f_cob * 1000000), 69,
+											 int(building_arg.ub * 100), 69, int(building_arg.t_ro * 100)])
+		print([int(building_arg.t_cob * 100), 69, int(building_arg.f_cob * 1000000), 6969,
+			   int(building_arg.ub * 100), 0, int(building_arg.t_ro * 100)])
+
+	# super(Logger, self).write_register(t_cob_address, int(building_arg.t_cob * 100))
+	# super(Logger, self).write_register(f_cob_address, int(building_arg.f_cob * 1000000))
+	# super(Logger, self).write_register(ub_address, int(building_arg.ub * 100))
+	# super(Logger, self).write_register(tr_address, int(building_arg.t_ro * 100))
 
 
 class CoilsDataBlock(ModbusSparseDataBlock):
@@ -116,6 +133,8 @@ class Server:
 		self.context = ModbusServerContext(slaves=self.store, single=True)
 		self.server = ModbusTcpServer(self.context, address=(address, port))
 		self.thread = Thread(target=self.__run_thread__, args=())
+		self.holding_register_block.setValues(t_o_address, 277)
+		self.holding_register_block.setValues(t_zco_address, 400)
 
 	def __run_thread__(self):
 		self.server.serve_forever()
