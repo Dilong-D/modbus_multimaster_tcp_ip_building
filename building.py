@@ -85,10 +85,10 @@ class Building:
 		self.f_cob = self.ub * self.F_MAX
 
 	def __str__(self):
-		return "\nTime=" + self.time + " Temp. building=" + str(
+		return "Time=" + self.time + " Temp. building=" + str(
 			self.t_ro) + " Temp. setpoint=" + str(
-			self.t_ref) + " Incoming H20 temp.=" + str(self.t_zco) + " Outcoming H20 temp.=" + str(
-			self.t_cob) + " Outcoming H20 flow=" + str(self.f_cob)
+			self.t_ref) + " Temp. outside=" + str(self.t_o) +" Incoming H20 temp.=" + str(self.t_zco) + " Outcoming H20 temp.=" + str(
+			self.t_cob) + " Outcoming H20 flow=" + str(self.f_cob) +" Outcoming Ub=" + str(self.ub)
 
 # building = Building()
 # for i in range(0, 60 * 60 * 10):
